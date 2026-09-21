@@ -1,0 +1,26 @@
+name = "whatisapeptide-gate"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# Run the gate in front of every request to the site.
+# Requires whatisapeptide.ai to be an active zone in this Cloudflare account.
+routes = [
+  { pattern = "whatisapeptide.ai/*", zone_name = "whatisapeptide.ai" },
+  { pattern = "www.whatisapeptide.ai/*", zone_name = "whatisapeptide.ai" }
+]
+
+[vars]
+SITE_URL = "https://www.whatisapeptide.ai"
+FROM_EMAIL = "hello@whatisapeptide.ai"   # must be on a domain verified with your ESP
+FROM_NAME = "whatisapeptide.ai"
+EMAIL_PROVIDER = "resend"                 # resend | postmark | sendgrid
+
+# KV: leads, single-use token records, rate-limit counters.
+# Create with:  npx wrangler kv namespace create GATE
+[[kv_namespaces]]
+binding = "GATE"
+id = "3798022c90464a6b9498536413b9422e"
+
+# Secrets are NOT stored here. Set them with:
+#   npx wrangler secret put SIGNING_KEY
+#   npx wrangler secret put EMAIL_API_KEY

@@ -1,0 +1,9 @@
+{
+  "name": "whatisapeptide",
+  "private": true,
+  "type": "module",
+  "description": "whatisapeptide.ai — static site plus email-verified access gate",
+  "dependencies": {
+    "@vercel/edge": "^1.2.2"
+  }
+}
