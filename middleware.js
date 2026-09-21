@@ -33,20 +33,18 @@ const MAX_REQUESTS_PER_IP_PER_HOUR = 5;
 
 /**
  * Vercel's Upstash integration prefixes injected variables with the store name
- * (e.g. WHATISAPEPTIDE_KV_REST_API_URL), so match on the suffix rather than an
- * exact key. Falls back to the unprefixed names used when set by hand.
+ * (e.g. WHATISAPEPTIDE_KV_REST_API_URL).
+ *
+ * These MUST be referenced statically. The Edge runtime inlines each
+ * `process.env.X` it can see at build time and does not expose process.env as
+ * an enumerable object, so scanning Object.keys(env) finds nothing at runtime.
+ * If the store is ever renamed, either add a line here or set the plain
+ * KV_REST_API_* names by hand in Project Settings.
  */
 function kvCreds(env) {
-  const find = (suffix) => {
-    if (env[suffix]) return env[suffix];
-    const key = Object.keys(env).find(
-      (k) => k.endsWith(`_${suffix}`) && env[k]
-    );
-    return key ? env[key] : null;
-  };
   return {
-    url: find("KV_REST_API_URL"),
-    token: find("KV_REST_API_TOKEN"),
+    url: env.KV_REST_API_URL || env.WHATISAPEPTIDE_KV_REST_API_URL || null,
+    token: env.KV_REST_API_TOKEN || env.WHATISAPEPTIDE_KV_REST_API_TOKEN || null,
   };
 }
 
