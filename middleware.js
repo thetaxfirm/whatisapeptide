@@ -31,19 +31,40 @@ const MAX_REQUESTS_PER_IP_PER_HOUR = 5;
 /* ------------------------------------------------------------------ store */
 /* Upstash Redis over REST — works in the Edge runtime, no SDK required. */
 
+/**
+ * Vercel's Upstash integration prefixes injected variables with the store name
+ * (e.g. WHATISAPEPTIDE_KV_REST_API_URL), so match on the suffix rather than an
+ * exact key. Falls back to the unprefixed names used when set by hand.
+ */
+function kvCreds(env) {
+  const find = (suffix) => {
+    if (env[suffix]) return env[suffix];
+    const key = Object.keys(env).find(
+      (k) => k.endsWith(`_${suffix}`) && env[k]
+    );
+    return key ? env[key] : null;
+  };
+  return {
+    url: find("KV_REST_API_URL"),
+    token: find("KV_REST_API_TOKEN"),
+  };
+}
+
 function storeConfigured(env) {
-  return Boolean(env.KV_REST_API_URL && env.KV_REST_API_TOKEN);
+  const { url, token } = kvCreds(env);
+  return Boolean(url && token);
 }
 
 async function kvCommand(env, pathParts, { body, query } = {}) {
+  const creds = kvCreds(env);
   const url =
-    `${env.KV_REST_API_URL.replace(/\/$/, "")}/` +
+    `${creds.url.replace(/\/$/, "")}/` +
     pathParts.map(encodeURIComponent).join("/") +
     (query ? `?${query}` : "");
 
   const res = await fetch(url, {
     method: body === undefined ? "GET" : "POST",
-    headers: { Authorization: `Bearer ${env.KV_REST_API_TOKEN}` },
+    headers: { Authorization: `Bearer ${creds.token}` },
     body,
   });
   if (!res.ok) throw new Error(`KV ${res.status}: ${(await res.text()).slice(0, 200)}`);
